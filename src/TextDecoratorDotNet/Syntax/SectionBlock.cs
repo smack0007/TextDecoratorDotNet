@@ -1,6 +1,6 @@
 ﻿using System.IO;
 
-namespace TextDecoratorDotNet
+namespace TextDecoratorDotNet.Syntax
 {
     internal class SectionBlock : ContainerBlock
     {

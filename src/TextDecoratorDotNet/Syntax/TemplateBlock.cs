@@ -1,4 +1,4 @@
-﻿namespace TextDecoratorDotNet
+﻿namespace TextDecoratorDotNet.Syntax
 {
     public abstract class TemplateBlock
     {

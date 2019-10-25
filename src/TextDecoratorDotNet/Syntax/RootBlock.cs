@@ -1,17 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace TextDecoratorDotNet
+namespace TextDecoratorDotNet.Syntax
 {
     internal class RootBlock : ContainerBlock
     {
         public override void Execute(TemplateContext context)
         {
-            foreach (var block in this.Blocks)
+            foreach (var block in Blocks)
             {
                 block.Execute(context);
             }

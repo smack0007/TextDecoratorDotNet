@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace TextDecoratorDotNet
+namespace TextDecoratorDotNet.Syntax
 {
     public abstract class ContainerBlock : TemplateBlock
     {
