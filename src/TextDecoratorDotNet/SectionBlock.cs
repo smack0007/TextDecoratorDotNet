@@ -4,22 +4,21 @@ namespace TextDecoratorDotNet
 {
     internal class SectionBlock : ContainerBlock
     {
-        private string variableName;
-        private bool isInverted;
+        private string _variableName;
+        private bool _isInverted;
 
         public SectionBlock(string variableName, bool isInverted)
         {
-            this.variableName = variableName;
-            this.isInverted = isInverted;
+            _variableName = variableName;
+            _isInverted = isInverted;
         }
 
-        public override void Execute(ExecuteContext context)
+        public override void Execute(TemplateContext context)
         {
-            object value = null;
-            if (context.Variables.TryGetValue(this.variableName, out value) &&
+            if (context.Variables.TryGetValue(_variableName, out var value) &&
                 !VariableHelper.IsFalsyValue(value))
             {
-                foreach (var block in this.Blocks)
+                foreach (var block in Blocks)
                 {
                     block.Execute(context);
                 }
@@ -28,7 +27,7 @@ namespace TextDecoratorDotNet
 
         public override string ToString()
         {
-            return "{{#" + this.variableName + "}}";
+            return "{{#" + _variableName + "}}";
         }
     }
 }

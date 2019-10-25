@@ -5,17 +5,17 @@ namespace TextDecoratorDotNet
 {
     public class Template
     {
-        private RootBlock root;
+        private RootBlock _root;
 
         internal Template(RootBlock root)
         {
-            this.root = root;
+            _root = root;
         }
 
         public void Run(TextWriter output, TemplateVariables variables)
         {
-            ExecuteContext context = new ExecuteContext(output, variables);
-            this.root.Execute(context);
+            var context = new TemplateContext(output, variables);
+            _root.Execute(context);
         }
     }
 }

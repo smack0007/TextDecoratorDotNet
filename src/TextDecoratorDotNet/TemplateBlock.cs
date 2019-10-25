@@ -2,6 +2,6 @@
 {
     public abstract class TemplateBlock
     {
-        public abstract void Execute(ExecuteContext context);
+        public abstract void Execute(TemplateContext context);
     }
 }

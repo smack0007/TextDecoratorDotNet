@@ -9,7 +9,7 @@ namespace TextDecoratorDotNet
 {
     internal class RootBlock : ContainerBlock
     {
-        public override void Execute(ExecuteContext context)
+        public override void Execute(TemplateContext context)
         {
             foreach (var block in this.Blocks)
             {

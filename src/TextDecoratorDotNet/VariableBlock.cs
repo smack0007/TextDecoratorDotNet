@@ -1,20 +1,17 @@
-﻿using System.IO;
-
-namespace TextDecoratorDotNet
+﻿namespace TextDecoratorDotNet
 {
     public class VariableBlock : TemplateBlock
     {
-        private readonly string variableName;
+        private readonly string _variableName;
 
         internal VariableBlock(string variableName)
         {
-            this.variableName = variableName;
+            _variableName = variableName;
         }
 
-        public override void Execute(ExecuteContext context)
+        public override void Execute(TemplateContext context)
         {
-            object value;
-            if (context.Variables.TryGetValue(this.variableName, out value))
+            if (context.Variables.TryGetValue(_variableName, out var value))
             {
                 context.Output.Write(value.ToString());
             }
@@ -22,7 +19,7 @@ namespace TextDecoratorDotNet
 
         public override string ToString()
         {
-            return "{{" + this.variableName + "}}";
+            return "{{" + _variableName + "}}";
         }
     }
 }

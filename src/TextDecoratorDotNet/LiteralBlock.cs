@@ -9,7 +9,7 @@
             this.literal = literal;
         }
 
-        public override void Execute(ExecuteContext context)
+        public override void Execute(TemplateContext context)
         {
             context.Output.Write(this.literal);
         }
