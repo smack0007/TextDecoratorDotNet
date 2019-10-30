@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Linq;
+using System.Reflection;
 using System.Text;
 
 namespace TextDecoratorDotNet
@@ -46,22 +48,32 @@ namespace TextDecoratorDotNet
                 ref lineNumber,
                 result);
 
-            output.AppendLine($@"class ScriptTemplate : Template<{parameters.TemplateContextName}>
-{{
-    public ScriptTemplate(TextWriter output, {parameters.TemplateContextName} context) : base(output, context) {{ }}
+            output.AppendLine($@"class ScriptTemplate : Template<{parameters.TemplateContextType.FullName}> {{");
+            output.AppendLine($"\tpublic ScriptTemplate(TextWriter output, {parameters.TemplateContextType.FullName} context) : base(output, context) {{ }}");
+            
+            foreach (var property in parameters.TemplateContextType.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(x => x.CanRead))
+            {
+                output.Append($"\tprivate {property.PropertyType.FullName} {property.Name} {{ get => _context.{property.Name}; ");
 
-    public string Name => _context.Name;
+                if (property.CanWrite)
+                {
+                    output.Append($"set => _context.{property.Name} = value; ");
+                }
 
-    public void __Run__()
-    {{
-{methodOutput}
-    }}
-}}
-return new Action<TextWriter, {parameters.TemplateContextName}>((output, context) =>
-{{
-    var template = new ScriptTemplate(output, context);
-    template.__Run__();
-}});");
+                output.AppendLine("}");
+            }
+            
+            output.AppendLine("\tpublic void __Run__() {");
+            output.Append(methodOutput.ToString());
+            output.AppendLine("\t}");
+            output.AppendLine("}");
+
+            output.AppendLine();
+
+            output.AppendLine($"return new Action<TextWriter, {parameters.TemplateContextType.FullName}>((output, context) => {{");
+            output.AppendLine("\tvar template = new ScriptTemplate(output, context);");
+            output.AppendLine("\ttemplate.__Run__();");
+            output.AppendLine("});");
         }
 
         private static void GenerateMethodBody(

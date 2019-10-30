@@ -11,7 +11,7 @@ namespace TextDecoratorDotNet
         public static async Task<Action<TextWriter, T>> CompileAsync<T>(string template)
             where T: TemplateContext
         {
-            var script = CodeGenerator.Generate(template, new CodeGeneratorParameters(typeof(T).FullName));
+            var script = CodeGenerator.Generate(template, new CodeGeneratorParameters(typeof(T)));
 
             var scriptOptions = ScriptOptions.Default
                 .AddImports("System", "System.IO")
@@ -34,7 +34,7 @@ namespace TextDecoratorDotNet
             _context = context;
         }
 
-        public void Write(string value) => _output.Write(value);
+        public void Write(object value) => _output.Write(value);
 
         public void WriteLiteral(string literal) => _output.Write(literal);
     }

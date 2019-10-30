@@ -1,19 +1,19 @@
-﻿namespace TextDecoratorDotNet
+﻿using System;
+
+namespace TextDecoratorDotNet
 {
     public class CodeGeneratorParameters
     {
-        public string TemplateContextName { get; }
+        public Type TemplateContextType { get; }
+
+        public bool IncludeLineDirectives { get; }
 
         public CodeGeneratorParameters(
-            string templateContextName)
+            Type templateContextType,
+            bool includeLineDirectives = true)
         {
-            TemplateContextName = templateContextName;
+            TemplateContextType = templateContextType;
+            IncludeLineDirectives = includeLineDirectives;
         }
-
-        public string ClassName { get; set; } = "MyTemplate";
-
-        public string BaseClassName { get; set; } = "Template";
-
-        public bool IncludeLineDirectives { get; set; } = true;
     }
 }
