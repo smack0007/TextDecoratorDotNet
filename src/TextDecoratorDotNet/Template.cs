@@ -9,7 +9,6 @@ namespace TextDecoratorDotNet
     public class Template
     {
         public static async Task<Action<TextWriter, T>> CompileAsync<T>(string template)
-            where T: TemplateContext
         {
             var script = CodeGenerator.Generate(template, new CodeGeneratorParameters(typeof(T)));
 
@@ -23,7 +22,7 @@ namespace TextDecoratorDotNet
         }
     }
 
-    public class Template<T> where T: TemplateContext
+    public class Template<T>
     {
         private readonly TextWriter _output;
         protected readonly T _context;
