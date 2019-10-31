@@ -21,15 +21,9 @@ namespace HelloWorld
                 "Hello @Name you are @Age years old!"
             );
 
-            var sb = new StringBuilder(1024);
+            Console.WriteLine(template.Run(new HelloWorldTemplateParams { Name = "Foo", Age = 35 }));
 
-            template.Invoke(new StringWriter(sb), new HelloWorldTemplateParams { Name = "Foo", Age = 35 });
-            sb.AppendLine();
-
-            template.Invoke(new StringWriter(sb), new HelloWorldTemplateParams { Name = "Bar", Age = 42 });
-            sb.AppendLine();
-
-            Console.Write(sb.ToString());
+            Console.WriteLine(template.Run(new HelloWorldTemplateParams { Name = "Bar", Age = 42 }));
 
             Console.ReadKey();
         }

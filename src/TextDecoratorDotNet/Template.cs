@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.CSharp.Scripting;
 using Microsoft.CodeAnalysis.Scripting;
@@ -8,7 +9,7 @@ namespace TextDecoratorDotNet
 {
     public class Template
     {
-        public static async Task<Action<TextWriter, T>> CompileAsync<T>(
+        public static async Task<Template<T>> CompileAsync<T>(
             string template,
             string[]? imports = null)
         {
@@ -16,31 +17,38 @@ namespace TextDecoratorDotNet
 
             var scriptOptions = ScriptOptions.Default
                 .AddImports("System", "System.IO")
-                .AddReferences(typeof(Template<T>).Assembly)
-                .AddImports(typeof(Template<T>).Namespace)
+                .AddReferences(typeof(TemplateBase<T>).Assembly)
+                .AddImports(typeof(TemplateBase<T>).Namespace)
                 .AddReferences(typeof(T).Assembly);
 
             if (imports != null)
                 scriptOptions = scriptOptions.AddImports(imports);
 
-            return await CSharpScript.EvaluateAsync<Action<TextWriter, T>>(script, scriptOptions);
+            var templateDelegate = await CSharpScript.EvaluateAsync<Action<TextWriter, T>>(script, scriptOptions);
+
+            return new Template<T>(templateDelegate);
         }
     }
 
     public class Template<T>
     {
-        private readonly TextWriter _output;
-        
-        protected T _Context { get; }
+        private readonly Action<TextWriter, T> _template;
 
-        public Template(TextWriter output, T context)
+        internal Template(Action<TextWriter, T> template)
         {
-            _output = output;
-            _Context = context;
+            _template = template;
         }
 
-        protected void _Write(object value) => _output.Write(value);
+        public string Run(T context, int bufferSize = 1024)
+        {
+            if (context == null)
+                throw new ArgumentNullException(nameof(context));
 
-        protected void _WriteLiteral(string literal) => _output.Write(literal);
+            var sb = new StringBuilder(bufferSize);
+            using var sw = new StringWriter(sb);
+            _template.Invoke(sw, context);
+
+            return sb.ToString();
+        }
     }
 }

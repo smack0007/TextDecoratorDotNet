@@ -46,7 +46,7 @@ namespace TextDecoratorDotNet
                 template.Length - 1,
                 ref lineNumber);
 
-            output.AppendLine($@"class ScriptTemplate : Template<{parameters.TemplateContextType.FullName}> {{");
+            output.AppendLine($@"class ScriptTemplate : TemplateBase<{parameters.TemplateContextType.FullName}> {{");
             output.AppendLine($"\tpublic ScriptTemplate(TextWriter output, {parameters.TemplateContextType.FullName} context) : base(output, context) {{ }}");
             
             foreach (var property in parameters.TemplateContextType.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(x => x.CanRead))
