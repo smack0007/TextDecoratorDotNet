@@ -8,7 +8,9 @@ namespace TextDecoratorDotNet
 {
     public class Template
     {
-        public static async Task<Action<TextWriter, T>> CompileAsync<T>(string template)
+        public static async Task<Action<TextWriter, T>> CompileAsync<T>(
+            string template,
+            string[]? imports = null)
         {
             var script = CodeGenerator.Generate(template, new CodeGeneratorParameters(typeof(T)));
 
@@ -18,23 +20,27 @@ namespace TextDecoratorDotNet
                 .AddImports(typeof(Template<T>).Namespace)
                 .AddReferences(typeof(T).Assembly);
 
-            return await CSharpScript.EvaluateAsync<Action<TextWriter, T>>(script.Code, scriptOptions);
+            if (imports != null)
+                scriptOptions = scriptOptions.AddImports(imports);
+
+            return await CSharpScript.EvaluateAsync<Action<TextWriter, T>>(script, scriptOptions);
         }
     }
 
     public class Template<T>
     {
         private readonly TextWriter _output;
-        protected readonly T _context;
+        
+        protected T _Context { get; }
 
         public Template(TextWriter output, T context)
         {
             _output = output;
-            _context = context;
+            _Context = context;
         }
 
-        public void Write(object value) => _output.Write(value);
+        protected void _Write(object value) => _output.Write(value);
 
-        public void WriteLiteral(string literal) => _output.Write(literal);
+        protected void _WriteLiteral(string literal) => _output.Write(literal);
     }
 }

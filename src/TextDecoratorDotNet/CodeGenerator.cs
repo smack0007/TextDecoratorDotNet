@@ -14,28 +14,27 @@ namespace TextDecoratorDotNet
             Expression
         }
 
-        public static CodeGeneratorResult Generate(string template, CodeGeneratorParameters parameters)
+        public static string Generate(string template, CodeGeneratorParameters parameters)
         {
             if (template == null)
-                throw new ArgumentNullException("template");
+                throw new ArgumentNullException(nameof(template));
 
-            StringBuilder output = new StringBuilder();
-            CodeGeneratorResult result = new CodeGeneratorResult();
+            if (parameters == null)
+                throw new ArgumentNullException(nameof(parameters));
 
-            GenerateScript(output, template, parameters, result);
+            StringBuilder output = new StringBuilder(1024);
 
-            result.Code = output.ToString();
+            GenerateScript(output, template, parameters);
 
-            return result;
+            return output.ToString();
         }
 
         private static void GenerateScript(
             StringBuilder output,
             string template,
-            CodeGeneratorParameters parameters,
-            CodeGeneratorResult result)
+            CodeGeneratorParameters parameters)
         {
-            StringBuilder methodOutput = new StringBuilder();
+            StringBuilder methodOutput = new StringBuilder(1024);
 
             int lineNumber = 1;
 
@@ -45,25 +44,24 @@ namespace TextDecoratorDotNet
                 parameters,
                 0,
                 template.Length - 1,
-                ref lineNumber,
-                result);
+                ref lineNumber);
 
             output.AppendLine($@"class ScriptTemplate : Template<{parameters.TemplateContextType.FullName}> {{");
             output.AppendLine($"\tpublic ScriptTemplate(TextWriter output, {parameters.TemplateContextType.FullName} context) : base(output, context) {{ }}");
             
             foreach (var property in parameters.TemplateContextType.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(x => x.CanRead))
             {
-                output.Append($"\tprivate {property.PropertyType.FullName} {property.Name} {{ get => _context.{property.Name}; ");
+                output.Append($"\tprivate {property.PropertyType.FullName} {property.Name} {{ get => _Context.{property.Name}; ");
 
                 if (property.CanWrite)
                 {
-                    output.Append($"set => _context.{property.Name} = value; ");
+                    output.Append($"set => _Context.{property.Name} = value; ");
                 }
 
                 output.AppendLine("}");
             }
             
-            output.AppendLine("\tpublic void __Run__() {");
+            output.AppendLine("\tpublic void _Run() {");
             output.Append(methodOutput.ToString());
             output.AppendLine("\t}");
             output.AppendLine("}");
@@ -72,7 +70,7 @@ namespace TextDecoratorDotNet
 
             output.AppendLine($"return new Action<TextWriter, {parameters.TemplateContextType.FullName}>((output, context) => {{");
             output.AppendLine("\tvar template = new ScriptTemplate(output, context);");
-            output.AppendLine("\ttemplate.__Run__();");
+            output.AppendLine("\ttemplate._Run();");
             output.AppendLine("});");
         }
 
@@ -82,8 +80,7 @@ namespace TextDecoratorDotNet
             CodeGeneratorParameters parameters,
             int start,
             int end,
-            ref int lineNumber,
-            CodeGeneratorResult result)
+            ref int lineNumber)
         {
             StringBuilder buffer = new StringBuilder(1024);
 
@@ -122,31 +119,23 @@ namespace TextDecoratorDotNet
                     }
                     else if (LookAhead(template, i, "for"))
                     {
-                        ParseLogicBlock("for", template, parameters, ref i, ref lineNumber, buffer, output, result);
+                        ParseLogicBlock("for", template, parameters, ref i, ref lineNumber, output);
                     }
                     else if (LookAhead(template, i, "foreach"))
                     {
-                        ParseLogicBlock("foreach", template, parameters, ref i, ref lineNumber, buffer, output, result);
+                        ParseLogicBlock("foreach", template, parameters, ref i, ref lineNumber, output);
                     }
                     else if (LookAhead(template, i, "if"))
                     {
-                        ParseLogicBlock("if", template, parameters, ref i, ref lineNumber, buffer, output, result);
-                    }
-                    else if (LookAhead(template, i, "property"))
-                    {
-                        ParseDeclaration("property", template, parameters, ref i, ref lineNumber, buffer, output, (x) => result.Properties.Add(x));
-                    }
-                    else if (LookAhead(template, i, "using"))
-                    {
-                        ParseDeclaration("using", template, parameters, ref i, ref lineNumber, buffer, output, (x) => result.Usings.Add(x));
+                        ParseLogicBlock("if", template, parameters, ref i, ref lineNumber, output);
                     }
                     else if (LookAhead(template, i, "var"))
                     {
-                        ParseDeclaration("var", template, parameters, ref i, ref lineNumber, buffer, output, (x) => output.AppendLine($"{x};"));
+                        ParseDeclaration("var", template, ref i, (x) => output.AppendLine($"{x};"));
                     }
                     else if (LookAhead(template, i, "while"))
                     {
-                        ParseLogicBlock("while", template, parameters, ref i, ref lineNumber, buffer, output, result);
+                        ParseLogicBlock("while", template, parameters, ref i, ref lineNumber, output);
                     }
                     else
                     {
@@ -280,11 +269,11 @@ namespace TextDecoratorDotNet
                 {
                     case BufferContents.Literal:
                         string literal = buffer.ToString().Replace("\"", "\"\"");
-                        output.AppendLine($"WriteLiteral(@\"{literal}\");");
+                        output.AppendLine($"_WriteLiteral(@\"{literal}\");");
                         break;
 
                     case BufferContents.Expression:
-                        output.AppendLine($"Write({buffer.ToString()});");
+                        output.AppendLine($"_Write({buffer.ToString()});");
                         break;
                 }
 
@@ -320,9 +309,7 @@ namespace TextDecoratorDotNet
             CodeGeneratorParameters parameters,
             ref int i,
             ref int lineNumber,
-            StringBuilder buffer,
-            StringBuilder output,
-            CodeGeneratorResult result)
+            StringBuilder output)
         {
             if (parameters.IncludeLineDirectives)
                 output.AppendLine($"#line {lineNumber}");
@@ -367,8 +354,7 @@ namespace TextDecoratorDotNet
                     parameters,
                     startCode,
                     endCode,
-                    ref lineNumber,
-                    result);
+                    ref lineNumber);
             }
 
             output.AppendLine("}");
@@ -400,7 +386,7 @@ namespace TextDecoratorDotNet
                     }
                     else if (template[i] == '[')
                     {
-                        ParseIndexer(template, parameters, ref i, ref lineNumber, buffer);
+                        ParseIndexer(template, ref i, buffer);
                         finished = false;
                     }
                 }
@@ -424,9 +410,7 @@ namespace TextDecoratorDotNet
 
         private static void ParseIndexer(
             string template,
-            CodeGeneratorParameters parameters,
             ref int i,
-            ref int lineNumber,
             StringBuilder buffer)
         {
             int depth = 1;
@@ -453,11 +437,7 @@ namespace TextDecoratorDotNet
         private static void ParseDeclaration(
             string type,
             string template,
-            CodeGeneratorParameters parameters,
             ref int i,
-            ref int lineNumber,
-            StringBuilder buffer,
-            StringBuilder output,
             Action<string> action)
         {
             int endOfLine = FindNext(template, i, "\n");
