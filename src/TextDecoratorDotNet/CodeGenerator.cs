@@ -29,6 +29,32 @@ namespace TextDecoratorDotNet
             return output.ToString();
         }
 
+        public static string GetTypeString(Type type)
+        {
+            string name = type.Name;
+
+            if (type.IsGenericType)
+            {
+                name = name.Substring(0, name.IndexOf('`'));
+                name += "<";
+
+                bool first = true;
+                foreach (var arg in type.GetGenericArguments())
+                {
+                    name += GetTypeString(arg);
+
+                    if (!first)
+                        name += ", ";
+
+                    first = false;
+                }
+
+                name += ">";
+            }
+
+            return type.Namespace + "." + name;
+        }
+
         private static void GenerateScript(
             StringBuilder output,
             string template,
@@ -51,7 +77,7 @@ namespace TextDecoratorDotNet
             
             foreach (var property in parameters.TemplateContextType.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(x => x.CanRead))
             {
-                output.Append($"\tprivate {property.PropertyType.FullName} {property.Name} {{ get => _Context.{property.Name}; ");
+                output.Append($"\tprivate {GetTypeString(property.PropertyType)} {property.Name} {{ get => _Context.{property.Name}; ");
 
                 if (property.CanWrite)
                 {

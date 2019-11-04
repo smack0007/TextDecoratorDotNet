@@ -1,14 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
-using Xunit;
+﻿using Xunit;
 
 namespace TextDecoratorDotNet.Tests
 {
     public class GetTestsContext
     {
-        public string Name { get; set; }
+        public string Name1 { get; set; }
+        
+        public string Name2 { get; set; }
     }
 
     public class GetTests
@@ -18,10 +16,23 @@ namespace TextDecoratorDotNet.Tests
         {
             AssertTemplate.Equal(
                 "Hello FooBar!",
-                "Hello @Name!",
+                "Hello @Name1!",
                 new GetTestsContext()
                 {
-                    Name = "FooBar",
+                    Name1 = "FooBar",
+                });
+        }
+
+        [Fact]
+        public void GetMultipleStringProperties()
+        {
+            AssertTemplate.Equal(
+                "Hello Foo and Bar!",
+                "Hello @Name1 and @Name2!",
+                new GetTestsContext()
+                {
+                    Name1 = "Foo",
+                    Name2 = "Bar"
                 });
         }
     }
