@@ -16,7 +16,7 @@ namespace TextDecoratorDotNet
             var script = CodeGenerator.Generate(template, new CodeGeneratorParameters(typeof(T)));
 
             var scriptOptions = ScriptOptions.Default
-                .AddImports("System", "System.IO")
+                .AddImports("System", "System.IO", "System.Linq")
                 .AddReferences(typeof(TemplateBase<T>).Assembly)
                 .AddImports(typeof(TemplateBase<T>).Namespace)
                 .AddReferences(typeof(T).Assembly);
@@ -24,7 +24,19 @@ namespace TextDecoratorDotNet
             if (imports != null)
                 scriptOptions = scriptOptions.AddImports(imports);
 
-            var templateDelegate = await CSharpScript.EvaluateAsync<Action<TextWriter, T>>(script, scriptOptions);
+            Action<TextWriter, T> templateDelegate;
+
+            try
+            {
+                templateDelegate = await CSharpScript.EvaluateAsync<Action<TextWriter, T>>(script, scriptOptions);
+            }
+            catch (CompilationErrorException ex)
+            {
+                throw new TemplateCompileException("Failed to compile script generated from template.", script, ex);
+            }
+
+            if (templateDelegate == null)
+                throw new TemplateCompileException("Failed to compile script generated from template.", script);
 
             return new Template<T>(templateDelegate);
         }

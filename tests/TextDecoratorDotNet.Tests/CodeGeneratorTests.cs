@@ -7,6 +7,7 @@ namespace TextDecoratorDotNet.Tests
     public class CodeGeneratorTests
     {
         [Theory]
+        [InlineData("void", typeof(void))]
         [InlineData("System.Int32", typeof(int))]
         [InlineData("System.String", typeof(string))]
         [InlineData("System.Collections.Generic.List<System.String>", typeof(List<string>))]

@@ -4,12 +4,12 @@ namespace TextDecoratorDotNet
 {
     public class TextDecoratorDotNetException : Exception
     {
-        public TextDecoratorDotNetException(string message)
+        internal TextDecoratorDotNetException(string message)
             : base(message)
         {
         }
 
-        public TextDecoratorDotNetException(string message, Exception innerException)
+        internal TextDecoratorDotNetException(string message, Exception innerException)
             : base(message, innerException)
         {
         }

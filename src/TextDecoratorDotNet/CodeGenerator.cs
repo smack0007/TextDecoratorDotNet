@@ -31,6 +31,9 @@ namespace TextDecoratorDotNet
 
         public static string GetTypeString(Type type)
         {
+            if (type == typeof(void))
+                return "void";
+
             string name = type.Name;
 
             if (type.IsGenericType)
@@ -75,18 +78,23 @@ namespace TextDecoratorDotNet
             output.AppendLine($@"class ScriptTemplate : TemplateBase<{parameters.TemplateContextType.FullName}> {{");
             output.AppendLine($"\tpublic ScriptTemplate(TextWriter output, {parameters.TemplateContextType.FullName} context) : base(output, context) {{ }}");
             
-            foreach (var property in parameters.TemplateContextType.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(x => x.CanRead))
+            foreach (var property in parameters.TemplateContextType.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(x => x.GetMethod?.IsPublic ?? false))
             {
                 output.Append($"\tprivate {GetTypeString(property.PropertyType)} {property.Name} {{ get => _Context.{property.Name}; ");
 
-                if (property.CanWrite)
+                if (property.SetMethod.IsPublic)
                 {
                     output.Append($"set => _Context.{property.Name} = value; ");
                 }
 
                 output.AppendLine("}");
             }
-            
+
+            foreach (var method in parameters.TemplateContextType.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly).Where(x => !x.IsSpecialName))
+            {
+                output.Append($"\tprivate {GetTypeString(method.ReturnType)} {method.Name}() => _Context.{method.Name}();");
+            }
+
             output.AppendLine("\tpublic void _Run() {");
             output.Append(methodOutput.ToString());
             output.AppendLine("\t}");

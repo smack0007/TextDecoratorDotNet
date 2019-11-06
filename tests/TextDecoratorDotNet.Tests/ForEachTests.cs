@@ -1,29 +1,43 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using Xunit;
 
 namespace TextDecoratorDotNet.Tests
 {
     public class ForEachTestsContext
     {
-        public List<string> Names { get; set; }
+        public IEnumerable<string> Names { get; set; } = Enumerable.Empty<string>();
     }
 
     public class ForEachTests
     {
         [Fact]
-        public void SingleForEachLoop()
+        public void SingleForEachLoopProducesSingleLine()
+        {
+            AssertTemplate.Equal(
+@"Hello Foo! Hello Bar! Hello Baz! ",
+@"@foreach (var name in Names) {Hello @name! }",
+                new ForEachTestsContext()
+                {
+                    Names = new string[] { "Foo", "Bar", "Baz" },
+                });
+        }
+
+        [Fact]
+        public void SingleForEachLoopProducesMultipleLines()
         {
             AssertTemplate.Equal(
 @"Hello Foo!
 Hello Bar!
 Hello Baz!
 ",
-@"@foreach (var name in Names) {
+@"@foreach (var name in Names)
+{
 Hello @name!
 }",
                 new ForEachTestsContext()
                 {
-                    Names = new List<string>() { "Foo", "Bar", "Baz" },
+                    Names = new string[] { "Foo", "Bar", "Baz" },
                 });
         }
     }
