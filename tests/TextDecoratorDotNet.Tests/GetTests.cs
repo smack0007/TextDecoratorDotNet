@@ -4,9 +4,9 @@ namespace TextDecoratorDotNet.Tests
 {
     public class GetTestsContext
     {
-        public string Name1 { get; set; }
+        public string Name1 { get; set; } = string.Empty;
         
-        public string Name2 { get; set; }
+        public string Name2 { get; set; } = string.Empty;
     }
 
     public class GetTests

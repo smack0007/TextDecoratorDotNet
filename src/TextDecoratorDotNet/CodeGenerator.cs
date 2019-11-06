@@ -151,7 +151,18 @@ namespace TextDecoratorDotNet
                     i++;
                     int beforePos = i;
 
-                    if (LookAhead(template, i, "{"))
+                    if (LookAhead(template, i, "("))
+                    {
+                        ParseExpressionBlock(template, ref i, buffer, '(', ')');
+
+                        FlushBuffer(
+                            parameters,
+                            BufferContents.Expression,
+                            buffer,
+                            output,
+                            lineNumber);
+                    }
+                    else if (LookAhead(template, i, "{"))
                     {
                         ParseCodeBlock(template, parameters, ref i, ref lineNumber, buffer, output);
                     }
@@ -166,10 +177,6 @@ namespace TextDecoratorDotNet
                     else if (LookAhead(template, i, "if"))
                     {
                         ParseLogicBlock("if", template, parameters, ref i, ref lineNumber, output);
-                    }
-                    else if (LookAhead(template, i, "var"))
-                    {
-                        ParseDeclaration("var", template, ref i, (x) => output.AppendLine($"{x};"));
                     }
                     else if (LookAhead(template, i, "while"))
                     {
@@ -477,30 +484,6 @@ namespace TextDecoratorDotNet
                 buffer.Append(template[i]);
                 i++;
             }
-        }
-
-        private static void ParseDeclaration(
-            string type,
-            string template,
-            ref int i,
-            Action<string> action)
-        {
-            int endOfLine = FindNext(template, i, "\n");
-            int newLineLength = 1;
-
-            if (endOfLine == -1)
-                endOfLine = template.Length;
-
-            if (template[endOfLine - 1] == '\r')
-            {
-                endOfLine--;
-                newLineLength++;
-            }
-
-            string content = template.Substring(i + type.Length + 1, endOfLine - i - type.Length - 1);
-            action(content);
-
-            i = endOfLine + newLineLength;
         }
     }
 }
