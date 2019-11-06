@@ -7,5 +7,7 @@
 
     <LangVersion>8.0</LangVersion>
     <Nullable>enable</Nullable>
+    <!-- Warnings related to Nullable should be treated as errors. -->
+    <WarningsAsErrors>$(WarningsAsErrors);CS8618</WarningsAsErrors>
   </PropertyGroup>
 </Project>

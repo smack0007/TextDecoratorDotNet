@@ -1,14 +1,12 @@
 ﻿using System;
-using System.IO;
-using System.Text;
 using System.Threading.Tasks;
 using TextDecoratorDotNet;
 
 namespace HelloWorld
-{   
+{
     public class HelloWorldTemplateParams
     {
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
 
         public int Age { get; set; }
     }
