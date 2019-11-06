@@ -92,7 +92,11 @@ namespace TextDecoratorDotNet
 
             foreach (var method in parameters.TemplateContextType.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly).Where(x => !x.IsSpecialName))
             {
-                output.Append($"\tprivate {GetTypeString(method.ReturnType)} {method.Name}() => _Context.{method.Name}();");
+                var methodParams = method.GetParameters();
+                var methodParamsDeclaration = string.Join(", ", method.GetParameters().Select(x => $"{GetTypeString(x.ParameterType)} {x.Name}"));
+                var methodParamsList = string.Join(", ", method.GetParameters().Select(x => x.Name));
+
+                output.AppendLine($"\tprivate {GetTypeString(method.ReturnType)} {method.Name}({methodParamsDeclaration}) => _Context.{method.Name}({methodParamsList});");
             }
 
             output.AppendLine("\tpublic void _Run() {");
@@ -418,9 +422,14 @@ namespace TextDecoratorDotNet
                         i++;
                         finished = false;
                     }
+                    else if (template[i] == '(')
+                    {
+                        ParseExpressionBlock(template, ref i, buffer, '(', ')');
+                        finished = false;
+                    }
                     else if (template[i] == '[')
                     {
-                        ParseIndexer(template, ref i, buffer);
+                        ParseExpressionBlock(template, ref i, buffer, '[', ']');
                         finished = false;
                     }
                 }
@@ -442,10 +451,12 @@ namespace TextDecoratorDotNet
                 lineNumber);
         }
 
-        private static void ParseIndexer(
+        private static void ParseExpressionBlock(
             string template,
             ref int i,
-            StringBuilder buffer)
+            StringBuilder buffer,
+            char startChar,
+            char endChar)
         {
             int depth = 1;
 
@@ -454,11 +465,11 @@ namespace TextDecoratorDotNet
 
             while (depth > 0 && i < template.Length)
             {
-                if (template[i] == '[')
+                if (template[i] == startChar)
                 {
                     depth++;
                 }
-                else if (template[i] == ']')
+                else if (template[i] == endChar)
                 {
                     depth--;
                 }

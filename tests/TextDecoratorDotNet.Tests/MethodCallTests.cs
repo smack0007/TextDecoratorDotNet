@@ -13,6 +13,8 @@ namespace TextDecoratorDotNet.Tests
         {
             VoidMethodCallCount++;
         }
+
+        public string Wrap(string input) => $"#{input}#";
     }
 
     public class MethodCallTests
@@ -28,6 +30,17 @@ namespace TextDecoratorDotNet.Tests
                 context);
 
             Assert.Equal(1, context.VoidMethodCallCount);            
+        }
+
+        [Fact]
+        public void CanCallWith1ParamAndReturnValue()
+        {
+            var context = new MethodCallTestsContext();
+
+            AssertTemplate.Equal(
+                @"Hello #Foo#!",
+                @"Hello @Wrap(""Foo"")!",
+                context);
         }
     }
 }
