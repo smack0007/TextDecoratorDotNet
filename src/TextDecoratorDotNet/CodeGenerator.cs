@@ -164,7 +164,7 @@ namespace TextDecoratorDotNet
                     }
                     else if (LookAhead(template, i, "{"))
                     {
-                        ParseCodeBlock(template, parameters, ref i, ref lineNumber, buffer, output);
+                        ParseCodeBlock(template, parameters, ref i, ref lineNumber, output);
                     }
                     else if (LookAhead(template, i, "for"))
                     {
@@ -331,9 +331,11 @@ namespace TextDecoratorDotNet
             CodeGeneratorParameters parameters,
             ref int i,
             ref int lineNumber,
-            StringBuilder buffer,
             StringBuilder output)
         {
+            if (parameters.IncludeLineDirectives)
+                output.AppendLine($"#line {lineNumber}");
+
             int closeCurlyBrace = FindClosingCurlyBrace(template, i);
 
             if (closeCurlyBrace == -1)
