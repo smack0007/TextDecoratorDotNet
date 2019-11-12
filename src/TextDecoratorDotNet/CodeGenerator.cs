@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -58,6 +59,20 @@ namespace TextDecoratorDotNet
             return type.Namespace + "." + name;
         }
 
+        public static IEnumerable<PropertyInfo> GetTypeProperties(Type type)
+        {
+            return type
+                .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                .Where(x => x.GetMethod?.IsPublic ?? false && !x.IsSpecialName && x.DeclaringType != typeof(object));
+        }
+
+        public static IEnumerable<MethodInfo> GetTypeMethods(Type type)
+        {
+            return type
+                .GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.FlattenHierarchy)
+                .Where(x => !x.IsSpecialName && x.DeclaringType != typeof(object));
+        }
+
         private static void GenerateScript(
             StringBuilder output,
             string template,
@@ -78,11 +93,11 @@ namespace TextDecoratorDotNet
             output.AppendLine($@"class ScriptTemplate : TemplateBase<{parameters.TemplateContextType.FullName}> {{");
             output.AppendLine($"\tpublic ScriptTemplate(TextWriter output, {parameters.TemplateContextType.FullName} context) : base(output, context) {{ }}");
             
-            foreach (var property in parameters.TemplateContextType.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(x => x.GetMethod?.IsPublic ?? false))
+            foreach (var property in GetTypeProperties(parameters.TemplateContextType))
             {
                 output.Append($"\tprivate {GetTypeString(property.PropertyType)} {property.Name} {{ get => _Context.{property.Name}; ");
 
-                if (property.SetMethod.IsPublic)
+                if (property.SetMethod?.IsPublic ?? false)
                 {
                     output.Append($"set => _Context.{property.Name} = value; ");
                 }
@@ -90,13 +105,20 @@ namespace TextDecoratorDotNet
                 output.AppendLine("}");
             }
 
-            foreach (var method in parameters.TemplateContextType.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly).Where(x => !x.IsSpecialName))
+            foreach (var method in GetTypeMethods(parameters.TemplateContextType))
             {
                 var methodParams = method.GetParameters();
                 var methodParamsDeclaration = string.Join(", ", method.GetParameters().Select(x => $"{GetTypeString(x.ParameterType)} {x.Name}"));
                 var methodParamsList = string.Join(", ", method.GetParameters().Select(x => x.Name));
 
-                output.AppendLine($"\tprivate {GetTypeString(method.ReturnType)} {method.Name}({methodParamsDeclaration}) => _Context.{method.Name}({methodParamsList});");
+                if (!method.IsStatic)
+                {
+                    output.AppendLine($"\tprivate {GetTypeString(method.ReturnType)} {method.Name}({methodParamsDeclaration}) => _Context.{method.Name}({methodParamsList});");
+                }
+                else
+                {
+                    output.AppendLine($"\tprivate static {GetTypeString(method.ReturnType)} {method.Name}({methodParamsDeclaration}) => {GetTypeString(method.DeclaringType)}.{method.Name}({methodParamsList});");
+                }
             }
 
             output.AppendLine("\tpublic void _Run() {");

@@ -14,7 +14,7 @@ namespace TextDecoratorDotNet.Tests
             VoidMethodCallCount++;
         }
 
-        public string Wrap(string input) => $"#{input}#";
+        public static string Wrap(string input) => $"#{input}#";
     }
 
     public class MethodCallTests
